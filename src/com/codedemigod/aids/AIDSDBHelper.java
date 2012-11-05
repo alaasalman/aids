@@ -115,6 +115,8 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
 		values.put(STATS_CPU, pStats.CPUUsage);
 		values.put(STATS_RX_BYTES, pStats.RxBytes);
 		values.put(STATS_TX_BYTES, pStats.TxBytes);
+		values.put(STATS_DIFF_RX_BYTES, pStats.DiffRxBytes);
+		values.put(STATS_DIFF_TX_BYTES, pStats.DiffTxBytes);
 		values.put(STATS_TS, pStats.TimeSnapshot);
 		values.put(STATS_PSS, pStats.PSSMemory);
 		values.put(STATS_SHARED, pStats.SharedMemory);
@@ -144,7 +146,8 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
 				STATS_TX_BYTES, STATS_RX_BYTES,
 				STATS_PSS, STATS_SHARED,
 				STATS_PRIVATE, STATS_DIFF_PSS,
-				STATS_DIFF_SHARED, STATS_DIFF_PRIVATE
+				STATS_DIFF_SHARED, STATS_DIFF_PRIVATE,
+				STATS_DIFF_TX_BYTES, STATS_DIFF_RX_BYTES
 				},
 				STATS_PROCESS_UID + "=?", new String[]{uid}, null, null, STATS_ID + " DESC", "1");
 		
@@ -167,6 +170,8 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
 		pStats.DiffPSSMemory = cursor.getInt(9);
 		pStats.DiffSharedMemory = cursor.getInt(10);
 		pStats.DiffPrivateMemory = cursor.getInt(11);
+		pStats.DiffTxBytes = cursor.getInt(12);
+		pStats.DiffRxBytes = cursor.getInt(13);
 		
 		
 		cursor.close();
