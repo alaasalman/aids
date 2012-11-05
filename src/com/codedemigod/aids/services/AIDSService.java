@@ -183,7 +183,7 @@ public class AIDSService extends Service {
 					
 					aidsDBHelper.insertStats(pStats);
 					
-					Log.i(TAG, String.format("Storing: %s-%s [%s - %s at %s] from reporting %s - %s", pInfo.pid, pStats.Name, pStats.DiffTxBytes, pStats.DiffRxBytes, pStats.CPUUsage, pStats.TxBytes, pStats.RxBytes));
+					Log.i(TAG, String.format("Storing: %s", pStats));
 				}
 				
 				
