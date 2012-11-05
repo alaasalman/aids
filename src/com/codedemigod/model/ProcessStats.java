@@ -9,4 +9,10 @@ public class ProcessStats {
 	public long RxBytes;
 	public long DiffTxBytes;
 	public long DiffRxBytes;
+	public int PSSMemory;
+	public int SharedMemory;
+	public int PrivateMemory;
+	public int DiffPSSMemory;
+	public int DiffSharedMemory;
+	public int DiffPrivateMemory;
 }

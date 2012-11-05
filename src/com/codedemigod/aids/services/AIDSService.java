@@ -17,11 +17,13 @@ import com.codedemigod.aids.AIDSDBHelper;
 import com.codedemigod.model.ProcessStats;
 
 import android.app.ActivityManager;
+import android.app.ActivityManager.MemoryInfo;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Service;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.TrafficStats;
+import android.os.Debug;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.SparseArray;
@@ -84,8 +86,9 @@ public class AIDSService extends Service {
 							if(tLine.contains("root")){
 								continue;
 							}
-
-							processUsages.put(Integer.parseInt(pid.replaceAll("\\s", "")), cpuUsage);
+							
+							int pidInt = Integer.parseInt(pid.replaceAll("\\s", ""));
+							processUsages.put(pidInt, cpuUsage);
 						}
 						catch(StringIndexOutOfBoundsException eiobe){
 							continue;
@@ -96,6 +99,20 @@ public class AIDSService extends Service {
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+				}
+				
+				
+				//get memory usage for pids
+				int[] pids = new int[processUsages.size()]; 
+				for(int i=0; i < processUsages.size(); i++){
+					pids[i] = processUsages.keyAt(i); 
+				}
+				
+				Debug.MemoryInfo[] memoryInfos = actManager.getProcessMemoryInfo(pids);
+				SparseArray<Debug.MemoryInfo> memoryUsage = new SparseArray<Debug.MemoryInfo>();
+				
+				for(int i=0; i < processUsages.size(); i++){
+					memoryUsage.put(processUsages.keyAt(i), memoryInfos[i]);
 				}
 				
 				//get running processes
@@ -134,6 +151,35 @@ public class AIDSService extends Service {
 					}
 					
 					pStats.CPUUsage = processUsages.get(pInfo.pid);
+					
+					Debug.MemoryInfo pMemInfo = memoryUsage.get(pInfo.pid);
+					
+					pStats.PSSMemory = pMemInfo.getTotalPss();
+					
+					if(pStats.PSSMemory < oldestPStats.PSSMemory){
+						pStats.DiffPSSMemory = pStats.PSSMemory;
+					}
+					else {
+						pStats.DiffPSSMemory = pStats.PSSMemory - oldestPStats.PSSMemory;
+					}
+					
+					pStats.SharedMemory = pMemInfo.getTotalSharedDirty();
+					
+					if(pStats.SharedMemory < oldestPStats.SharedMemory){
+						pStats.DiffSharedMemory = pStats.SharedMemory;
+					}
+					else {
+						pStats.DiffSharedMemory = pStats.SharedMemory - oldestPStats.SharedMemory;
+					}
+					
+					pStats.PrivateMemory = pMemInfo.getTotalPrivateDirty();
+					
+					if(pStats.PrivateMemory < oldestPStats.PrivateMemory){
+						pStats.DiffPrivateMemory = pStats.PrivateMemory;
+					}
+					else {
+						pStats.DiffPrivateMemory = pStats.PrivateMemory - oldestPStats.PrivateMemory;
+					}
 					
 					aidsDBHelper.insertStats(pStats);
 					

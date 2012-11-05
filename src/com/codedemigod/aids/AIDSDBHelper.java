@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class AIDSDBHelper extends SQLiteOpenHelper {
-	private static final int DATABASE_VERSION = 3;
+	private static final int DATABASE_VERSION = 4;
     private static final String STATS_TABLE_NAME = "pstats";
     private static final String STATS_ID = "id";
     private static final String STATS_PROCESS_NAME = "pname";
@@ -20,6 +20,12 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
     private static final String STATS_TS = "timestamp";
     private static final String STATS_PROCESS_UID = "uid";
     private static final String STATS_CPU = "cpu";
+    private static final String STATS_PSS = "pss";
+    private static final String STATS_SHARED = "shared";
+    private static final String STATS_PRIVATE = "private";
+    private static final String STATS_DIFF_PSS = "diffpss";
+    private static final String STATS_DIFF_SHARED = "diffshared";
+    private static final String STATS_DIFF_PRIVATE = "diffprivate";
     
     private static final String STATS_TABLE_CREATE =
                 "CREATE TABLE " + STATS_TABLE_NAME + " (" +
@@ -31,7 +37,13 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
                 STATS_TX_BYTES + " int," +
                 STATS_DIFF_RX_BYTES + " int," +
                 STATS_DIFF_TX_BYTES + " int," +
-                STATS_TS + " int" +
+                STATS_TS + " int," +
+                STATS_PSS + " int," +
+                STATS_SHARED + " int," +
+                STATS_PRIVATE + " int," +
+                STATS_DIFF_PSS + " int," +
+                STATS_DIFF_SHARED + " int," +
+                STATS_DIFF_PRIVATE + " int," +
                 ");";
 
     private static final String GENERIC_STATS_TABLE_DROP =
@@ -42,6 +54,24 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
     
     private static final String ADD_DIFF_RXBYTES = 
     		"ALTER TABLE " + STATS_TABLE_NAME + " ADD COLUMN " + STATS_DIFF_RX_BYTES + " INT;";
+    
+    private static final String ADD_PSS = 
+    		"ALTER TABLE " + STATS_TABLE_NAME + " ADD COLUMN " + STATS_PSS + " INT;";
+    
+    private static final String ADD_SHARED = 
+    		"ALTER TABLE " + STATS_TABLE_NAME + " ADD COLUMN " + STATS_SHARED + " INT;";
+    
+    private static final String ADD_PRIVATE = 
+    		"ALTER TABLE " + STATS_TABLE_NAME + " ADD COLUMN " + STATS_PRIVATE + " INT;";
+    
+    private static final String ADD_DIFF_PSS = 
+    		"ALTER TABLE " + STATS_TABLE_NAME + " ADD COLUMN " + STATS_DIFF_PSS + " INT;";
+    
+    private static final String ADD_DIFF_SHARED = 
+    		"ALTER TABLE " + STATS_TABLE_NAME + " ADD COLUMN " + STATS_DIFF_SHARED + " INT;";
+    
+    private static final String ADD_DIFF_PRIVATE = 
+    		"ALTER TABLE " + STATS_TABLE_NAME + " ADD COLUMN " + STATS_DIFF_PRIVATE + " INT;";
     
     public AIDSDBHelper(Context context) {
         super(context, "stats.db", null, DATABASE_VERSION);
@@ -64,6 +94,15 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
 			db.execSQL(ADD_DIFF_TXBYTES);
 			db.execSQL(ADD_DIFF_RXBYTES);
 		}
+		
+		if(oldVersion == 3 && newVersion == 4){
+			db.execSQL(ADD_PSS);
+			db.execSQL(ADD_SHARED);
+			db.execSQL(ADD_PRIVATE);
+			db.execSQL(ADD_DIFF_PSS);
+			db.execSQL(ADD_DIFF_SHARED);
+			db.execSQL(ADD_DIFF_PRIVATE);
+		}
 	}
 	
 	public boolean insertStats(ProcessStats pStats){
@@ -77,6 +116,12 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
 		values.put(STATS_RX_BYTES, pStats.RxBytes);
 		values.put(STATS_TX_BYTES, pStats.TxBytes);
 		values.put(STATS_TS, pStats.TimeSnapshot);
+		values.put(STATS_PSS, pStats.PSSMemory);
+		values.put(STATS_SHARED, pStats.SharedMemory);
+		values.put(STATS_PRIVATE, pStats.PrivateMemory);
+		values.put(STATS_DIFF_PSS, pStats.DiffPSSMemory);
+		values.put(STATS_DIFF_SHARED, pStats.DiffSharedMemory);
+		values.put(STATS_DIFF_PRIVATE, pStats.DiffPrivateMemory);
 		
 		long insertedID = aidsDB.insert(STATS_TABLE_NAME, null, values);
 		
@@ -96,7 +141,10 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
 		SQLiteCursor cursor =  (SQLiteCursor) aidsDB.query(STATS_TABLE_NAME, new String[]{
 				STATS_TS, STATS_PROCESS_NAME, 
 				STATS_PROCESS_UID, STATS_CPU, 
-				STATS_TX_BYTES, STATS_RX_BYTES
+				STATS_TX_BYTES, STATS_RX_BYTES,
+				STATS_PSS, STATS_SHARED,
+				STATS_PRIVATE, STATS_DIFF_PSS,
+				STATS_DIFF_SHARED, STATS_DIFF_PRIVATE
 				},
 				STATS_PROCESS_UID + "=?", new String[]{uid}, null, null, STATS_ID + " DESC", "1");
 		
@@ -113,6 +161,13 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
 		pStats.CPUUsage = cursor.getString(3);
 		pStats.TxBytes = cursor.getLong(4);
 		pStats.RxBytes = cursor.getLong(5);
+		pStats.PSSMemory = cursor.getInt(6);
+		pStats.SharedMemory = cursor.getInt(7);
+		pStats.PrivateMemory = cursor.getInt(8);
+		pStats.DiffPSSMemory = cursor.getInt(9);
+		pStats.DiffSharedMemory = cursor.getInt(10);
+		pStats.DiffPrivateMemory = cursor.getInt(11);
+		
 		
 		cursor.close();
 		aidsDB.close();
