@@ -1,0 +1,31 @@
+AIDS - Android Intrusion Detection System
+------------------------------------------
+
+
+About
+-----
+The AIDS application is a proof of concept of a host-based intrusion detection system
+for the Android platform. It uses behavior modeling to detect the existance of
+malware on your device. 
+
+
+Features
+--------
+The basic features:
+- doesn't need a rooted phone
+- efficient
+
+
+Usage
+-----
+This is not distributed on the Play store and probably never will. So to run
+you'd need to compile the source and sideload the apk on your device.
+
+
+License
+-------
+AIDS is distributed under the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 3 of the License, or (at your option) any later version.
+A copy of this license can be found in the file COPYING included with the source code of this
+program.
+
