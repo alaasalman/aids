@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.codedemigod.aids.AIDSDBHelper;
+import com.codedemigod.model.MobileAttrib;
 import com.codedemigod.model.ProcessStats;
 
 import android.app.ActivityManager;
@@ -21,10 +22,12 @@ import android.app.ActivityManager.MemoryInfo;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Service;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.net.TrafficStats;
 import android.os.Debug;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -153,7 +156,7 @@ public class AIDSService extends Service {
 					pStats.CPUUsage = processUsages.get(pInfo.pid);
 					
 					Debug.MemoryInfo pMemInfo = memoryUsage.get(pInfo.pid);
-					
+					//TODO null check if pid isn't there? why wouldn't it???
 					pStats.PSSMemory = pMemInfo.getTotalPss();
 					
 					if(pStats.PSSMemory < oldestPStats.PSSMemory){
@@ -183,10 +186,18 @@ public class AIDSService extends Service {
 					
 					aidsDBHelper.insertStats(pStats);
 					
-					Log.i(TAG, String.format("Storing: %s", pStats));
+					//Log.i(TAG, String.format("Storing: %s", pStats));
 				}
 				
+				//look at mobile attributes
 				
+				PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+				
+				MobileAttrib mb = new MobileAttrib();
+				mb.IsScreenLocked = pm.isScreenOn();
+				mb.TimeSnapshot = timeSnapshot;
+				
+				aidsDBHelper.insertMobileAttrib(mb);
 			}
 		};
     	

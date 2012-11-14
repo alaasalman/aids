@@ -1,5 +1,6 @@
 package com.codedemigod.aids;
 
+import com.codedemigod.model.MobileAttrib;
 import com.codedemigod.model.ProcessStats;
 
 import android.content.ContentValues;
@@ -9,7 +10,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class AIDSDBHelper extends SQLiteOpenHelper {
-	private static final int DATABASE_VERSION = 4;
+	private static final int DATABASE_VERSION = 5;
     private static final String STATS_TABLE_NAME = "pstats";
     private static final String STATS_ID = "id";
     private static final String STATS_PROCESS_NAME = "pname";
@@ -17,7 +18,7 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
     private static final String STATS_TX_BYTES = "txbytes";
     private static final String STATS_DIFF_RX_BYTES = "diffrxbytes";
     private static final String STATS_DIFF_TX_BYTES = "difftxbytes";
-    private static final String STATS_TS = "timestamp";
+    private static final String COLUMN_TS = "timestamp";
     private static final String STATS_PROCESS_UID = "uid";
     private static final String STATS_CPU = "cpu";
     private static final String STATS_PSS = "pss";
@@ -26,6 +27,9 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
     private static final String STATS_DIFF_PSS = "diffpss";
     private static final String STATS_DIFF_SHARED = "diffshared";
     private static final String STATS_DIFF_PRIVATE = "diffprivate";
+    private static final String MOBILEATTRIB_TABLE_NAME = "mobile_attrib";
+    private static final String MOBILEATTRIB_ID = "id";
+    private static final String MOBILEATTRIB_SCREENLOCK = "isscreenlocked";
     
     private static final String STATS_TABLE_CREATE =
                 "CREATE TABLE " + STATS_TABLE_NAME + " (" +
@@ -37,13 +41,20 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
                 STATS_TX_BYTES + " int," +
                 STATS_DIFF_RX_BYTES + " int," +
                 STATS_DIFF_TX_BYTES + " int," +
-                STATS_TS + " int," +
+                COLUMN_TS + " int," +
                 STATS_PSS + " int," +
                 STATS_SHARED + " int," +
                 STATS_PRIVATE + " int," +
                 STATS_DIFF_PSS + " int," +
                 STATS_DIFF_SHARED + " int," +
                 STATS_DIFF_PRIVATE + " int," +
+                ");";
+    
+    private static final String MOBILEATTRIB_TABLE_CREATE = 
+				"CREATE TABLE " + MOBILEATTRIB_TABLE_NAME + " (" +
+				MOBILEATTRIB_ID + " INTEGER PRIMARY KEY," +
+				COLUMN_TS + " int," +
+				MOBILEATTRIB_SCREENLOCK + " int" +
                 ");";
 
     private static final String GENERIC_STATS_TABLE_DROP =
@@ -103,6 +114,10 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
 			db.execSQL(ADD_DIFF_SHARED);
 			db.execSQL(ADD_DIFF_PRIVATE);
 		}
+		
+		if(oldVersion == 4 && newVersion == 5){
+			db.execSQL(MOBILEATTRIB_TABLE_CREATE);
+		}
 	}
 	
 	public boolean insertStats(ProcessStats pStats){
@@ -117,7 +132,7 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
 		values.put(STATS_TX_BYTES, pStats.TxBytes);
 		values.put(STATS_DIFF_RX_BYTES, pStats.DiffRxBytes);
 		values.put(STATS_DIFF_TX_BYTES, pStats.DiffTxBytes);
-		values.put(STATS_TS, pStats.TimeSnapshot);
+		values.put(COLUMN_TS, pStats.TimeSnapshot);
 		values.put(STATS_PSS, pStats.PSSMemory);
 		values.put(STATS_SHARED, pStats.SharedMemory);
 		values.put(STATS_PRIVATE, pStats.PrivateMemory);
@@ -136,12 +151,30 @@ public class AIDSDBHelper extends SQLiteOpenHelper {
 		return true;
 	}
 	
+	public boolean insertMobileAttrib(MobileAttrib mb){
+		SQLiteDatabase aidsDB =  this.getWritableDatabase();
+		
+		ContentValues values = new ContentValues();
+		values.put(COLUMN_TS, mb.TimeSnapshot);
+		values.put(MOBILEATTRIB_SCREENLOCK, mb.IsScreenLocked);
+		
+		long insertedID = aidsDB.insert(MOBILEATTRIB_TABLE_NAME, null, values);
+		
+		aidsDB.close();
+		
+		if(insertedID == -1){
+			return false;
+		}
+		
+		return true;
+	}
+	
 	public ProcessStats getLatestProcessStats(String uid){
 		ProcessStats pStats = new ProcessStats();
 		SQLiteDatabase aidsDB =  this.getReadableDatabase();
 		
 		SQLiteCursor cursor =  (SQLiteCursor) aidsDB.query(STATS_TABLE_NAME, new String[]{
-				STATS_TS, STATS_PROCESS_NAME, 
+				COLUMN_TS, STATS_PROCESS_NAME, 
 				STATS_PROCESS_UID, STATS_CPU, 
 				STATS_TX_BYTES, STATS_RX_BYTES,
 				STATS_PSS, STATS_SHARED,
