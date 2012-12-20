@@ -15,6 +15,7 @@ import android.util.Log;
 import com.codedemigod.model.APackage;
 import com.codedemigod.model.Alert;
 import com.codedemigod.model.CPUUsage;
+import com.codedemigod.model.Comm;
 import com.codedemigod.model.Event;
 import com.codedemigod.model.IEModel;
 import com.codedemigod.model.MemoryUsage;
@@ -72,14 +73,11 @@ public final class AIDSDBHelper extends SQLiteOpenHelper {
 			+ TIMESTAMP + " int," + PROCESS_UID + " TEXT, "
 			+ NETWORKUSAGE_RX_BYTES + " int," + NETWORKUSAGE_TX_BYTES + " int,"
 			+ NETWORKUSAGE_DIFF_RX_BYTES + " int," + NETWORKUSAGE_DIFF_TX_BYTES
-			+ " int," 
-			+ NETWORKUSAGE_RX_PACKETS + " int,"
+			+ " int," + NETWORKUSAGE_RX_PACKETS + " int,"
 			+ NETWORKUSAGE_RX_TCP_PACKETS + " int,"
-			+ NETWORKUSAGE_RX_UDP_PACKETS + " int,"
-			+ NETWORKUSAGE_TX_PACKETS + " int,"
-			+ NETWORKUSAGE_TX_TCP_PACKETS + " int,"
-			+ NETWORKUSAGE_TX_UDP_PACKETS + " int"
-			+ ");";
+			+ NETWORKUSAGE_RX_UDP_PACKETS + " int," + NETWORKUSAGE_TX_PACKETS
+			+ " int," + NETWORKUSAGE_TX_TCP_PACKETS + " int,"
+			+ NETWORKUSAGE_TX_UDP_PACKETS + " int" + ");";
 
 	// memory usage table, collecting PSS&private&shared memory timestamped per
 	// process
@@ -130,6 +128,16 @@ public final class AIDSDBHelper extends SQLiteOpenHelper {
 			+ " int, " + PACKAGE_NUMERIC_THREAT + " REAL, " + PROCESS_NAME
 			+ " TEXT, " + PROCESS_UID + " TEXT" + ");";
 
+	// comm table, collects ip and ports on ipv4 and 6 open and maps them to uid
+	private static final String COMM_TABLE_NAME = "comm";
+	private static final String COMM_LOCAL_IP_PORT = "local";
+	private static final String COMM_REMOTE_IP_PORT = "remote";
+
+	private static final String COMM_TABLE_CREATE = "CREATE TABLE "
+			+ COMM_TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY," + TIMESTAMP
+			+ " int," + COMM_LOCAL_IP_PORT + " TEXT, " + COMM_REMOTE_IP_PORT
+			+ " TEXT, " + PROCESS_UID + " TEXT" + ");";
+
 	// TODO better description
 	// table for IEModel, to hold cumulative resources
 	// fromts, tots, processname, lowcpu, midcpu, highcpu
@@ -168,7 +176,7 @@ public final class AIDSDBHelper extends SQLiteOpenHelper {
 	private static final String[] tables = new String[] { PROCESS_TABLE_NAME,
 			CPUUSAGE_TABLE_NAME, NETWORKUSAGE_TABLE_NAME,
 			MEMORYUSAGE_TABLE_NAME, EVENT_TABLE_NAME, PACKAGE_TABLE_NAME,
-			IEMODEL_TABLE_NAME, THREATALERT_TABLE_NAME, LOG_TABLE_NAME };
+			IEMODEL_TABLE_NAME, THREATALERT_TABLE_NAME, LOG_TABLE_NAME, COMM_TABLE_NAME };
 
 	private AIDSDBHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -185,6 +193,7 @@ public final class AIDSDBHelper extends SQLiteOpenHelper {
 		db.execSQL(IEMODEL_TABLE_CREATE);
 		db.execSQL(THREATALERT_TABLE_CREATE);
 		db.execSQL(LOG_TABLE_CREATE);
+		db.execSQL(COMM_TABLE_CREATE);
 	}
 
 	@Override
@@ -284,7 +293,6 @@ public final class AIDSDBHelper extends SQLiteOpenHelper {
 		values.put(NETWORKUSAGE_TX_UDP_PACKETS, nu.TxUdpPackets);
 		values.put(NETWORKUSAGE_DIFF_RX_BYTES, nu.DiffRxBytes);
 		values.put(NETWORKUSAGE_DIFF_TX_BYTES, nu.DiffTxBytes);
-		
 
 		try {
 			aidsDB.beginTransaction();
@@ -799,6 +807,32 @@ public final class AIDSDBHelper extends SQLiteOpenHelper {
 		return true;
 	}
 
+	public boolean insertComm(Comm pCom) {
+		SQLiteDatabase aidsDB = this.getWritableDatabase();
+
+		long insertedID = 0;
+		ContentValues values = new ContentValues();
+
+		values.put(TIMESTAMP, pCom.TimeStamp);
+		values.put(PROCESS_UID, pCom.Uid);
+		values.put(COMM_LOCAL_IP_PORT, pCom.LocalIpAndPort);
+		values.put(COMM_REMOTE_IP_PORT, pCom.RemoteIpAndPort);
+
+		try {
+			aidsDB.beginTransaction();
+			insertedID = aidsDB.insert(COMM_TABLE_NAME, null, values);
+			aidsDB.setTransactionSuccessful();
+		} finally {
+			aidsDB.endTransaction();
+		}
+
+		if (insertedID == -1) {
+			return false;
+		}
+
+		return true;
+	}
+	
 	public boolean resetAllData() {
 		SQLiteDatabase aidsDB = this.getWritableDatabase();
 

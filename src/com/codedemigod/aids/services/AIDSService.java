@@ -20,6 +20,7 @@ import com.codedemigod.aids.AINDSTask;
 import com.codedemigod.analyzer.GAnalyzer;
 import com.codedemigod.analyzer.IEAnalyzer;
 import com.codedemigod.collector.CPUUsageCollector;
+import com.codedemigod.collector.CommCollector;
 import com.codedemigod.collector.EventCollector;
 import com.codedemigod.collector.MemoryCollector;
 import com.codedemigod.collector.NetworkCollector;
@@ -87,6 +88,7 @@ public class AIDSService extends Service {
 		idsTasks.add(new CPUUsageCollector());
 		idsTasks.add(new MemoryCollector());
 		idsTasks.add(new NetworkCollector());
+		idsTasks.add(new CommCollector());
 		idsTasks.add(new IEAnalyzer());
 		idsTasks.add(new IEDetector());
 		idsTasks.add(new GAnalyzer());
